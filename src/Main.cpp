@@ -3,7 +3,7 @@
 #include <vector>
 #include <cctype>
 #include <cstdlib>
-
+#include <variant>
 #include "lib/nlohmann/json.hpp"
 
 using json = nlohmann::json;
@@ -24,7 +24,26 @@ json decode_bencoded_value(const std::string& encoded_value, size_t& pos) {
         }
         ++pos; // Move past the 'e' character
         return listElements;
-    } else if (std::isdigit(encoded_value[pos])) {
+
+
+
+    }else if(encoded_value[pos] == 'd'){
+        // Handling dictionary decoding
+        ++pos; //Move past the 'd'
+        std::unordered_map<json,json> dictionaryElements;
+        while(pos < encoded_value.size() && encoded_value[pos] != 'e'){
+
+            // Recursively decode each element within the list
+            json key = decode_bencoded_value(encoded_value, pos);
+            json value = decode_bencoded_value(encoded_value, pos);
+            dictionaryElements.emplace(key, value);   
+            }
+        
+        ++pos;
+        return dictionaryElements;
+
+
+    }else if (std::isdigit(encoded_value[pos])) {
         // Handling String decoding
         size_t colon_index = encoded_value.find(':', pos);
         if (colon_index != std::string::npos) {
